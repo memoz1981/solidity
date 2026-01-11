@@ -109,4 +109,45 @@ contract MathTests is Test {
         //assert
         assert(result == -1);
     }
+
+    function test_bitwise_negation() pure public {
+        //arrange
+        int8 a = 85; // 01010101, 1 + 4 + 16 + 64 = 85
+        int8 b = -86; // 10101010, (2 + 8 + 32) - 128 = 42 - 128 = -86
+        
+        //act
+        int8 result = ~a; 
+
+        //assert
+        assert(result == b);
+    }
+
+    function test_shift_left_without_overflow() pure public {
+        //arrange
+        int8 a = 11; // 00001011, 1 + 2 + 8 = 11
+        int8 b = 88; // 01011000, (8 + 16 + 0 + 64) = 88 = 11 x 2e3 
+        
+        //act
+        int8 result = a << 3; 
+
+        //assert
+        assert(result == b);
+    }
+
+    function test_shift_left_with_overflow() pure public {
+        //arrange
+        int8 a = 11; // 00001011, 1 + 2 + 8 = 11
+        int8 b = -80; // 10110000, (16 + 32) - 128 = -80
+        int8 c; 
+        unchecked {
+            c = a * 16;
+        }
+        
+        //act
+        int8 result = a << 4; 
+
+        //assert
+        assert(result == b);
+        assert(c == b); 
+    }
 }
