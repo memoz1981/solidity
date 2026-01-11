@@ -40,3 +40,26 @@ abs(number) -> ~ -> +1
 **Convert bits to numbers for signed**
 value = bits - 2^n; 
 1111111 -> 127 - 128 = -1
+
+**Note:** Shift is allowed only bu unsigned types -> the left operand will be truncated to match the type (limits). 
+
+x << y = x * 2ey + truncated to the type of x. 
+x >> y = x / 2ey + rounded towards negative infinity (i.e. down) (before version 0.5.0 it was being rounded up rather than down)
+
+Overflow checks are not done for shifts -> instead the result is being truncated. 
+
+(uint8)5 << 4 = 00000101 << 4 = 01010000 = 2e6 + 2e4 = 80 = 5 * 2e4
+(uint8)81 >> 4 = 01010001 >> 4 = 00000101 = 5 = 81 / 5 rounded down = 16
+
+**Note:** When using unary - -> i.e. -5 or -(-5) = 5 -> it's only allowed for signed integers. 
+x = type(int8).min -> unchecked {-x} -> this will cause overflow
+
+**Division** 
+- by zero -> panic error
+- rounded towards zero
+a) -5/2 = -4/2 = 2
+b) 5/2 = 4/2 = 2
+- int.min / -1 -> checked reverted, unchecked results in incorrect result int.min
+
+**Modulo**
+
