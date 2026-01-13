@@ -39,7 +39,7 @@ contract ERC20_1 is IERC20 {
 
     function transfer(address _to, uint256 _value) public returns (bool success)
     {
-        require(_to != address(0));
+        require(_to != address(0), "Cannot transfer to zero address");
         
         // not sure if a check to see if the dictionary contains the value (or zero) is required here...
         // also when does it need to return false???

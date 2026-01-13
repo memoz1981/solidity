@@ -60,4 +60,45 @@ contract ERC20_1_Tests is Test {
         vm.expectRevert();
         erc.transfer(to, 100);
     }
+
+    function test_transfer_shouldRevert_whenUserDoesntHoldAnyBalance() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        address to = address(1);
+        erc.addSupply(1000);
+
+        //act - assert
+        vm.expectRevert();
+        erc.transfer(to, 100);
+    }
+
+    function test_transfer_shouldRevert_whenUserDoesntHoldEnoughBalance() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        address to = address(1);
+        erc.addSupply(1000);
+        erc.mint(address(this), 200);
+
+        //act - assert
+        vm.expectRevert();
+        erc.transfer(to, 201);
+    }
+
+    function test_transfer_happyPath() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        address to = address(1);
+        erc.addSupply(1000);
+        erc.mint(address(this), 200);
+
+        //act - assert
+        bool result = erc.transfer(to, 199);
+        assert(result);
+
+        uint256 balance = erc.balanceOf(address(this));
+        assert(balance == 1); 
+    }
 }
