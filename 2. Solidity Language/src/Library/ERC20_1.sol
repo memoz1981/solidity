@@ -39,6 +39,8 @@ contract ERC20_1 is IERC20 {
 
     function transfer(address _to, uint256 _value) public returns (bool success)
     {
+        require(_to != address(0));
+        
         // not sure if a check to see if the dictionary contains the value (or zero) is required here...
         // also when does it need to return false???
         require(balanceSheet[msg.sender].totalBalance > _value, "Not enough funds...");
@@ -97,5 +99,28 @@ contract ERC20_1 is IERC20 {
         }
 
         emit Transfer(_from, _to, _value);
+    }
+
+    /* FUNCTIONS TO BE ABLE TO TEST THE CONTRACT */
+    modifier ownerOnly()  
+    {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function addSupply(uint256 amount) public ownerOnly
+    {
+        totalSupply += amount; 
+    } 
+
+    function mint(address to, uint256 amount) public ownerOnly {
+        require(to != address(0));
+        Balance storage b = balanceSheet[to];
+        b.exists = true; 
+        b.totalBalance += amount;
+
+        totalSupply += amount;
+
+        emit Transfer(address(0), to, amount);
     }
 }
