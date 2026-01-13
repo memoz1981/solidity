@@ -15,12 +15,12 @@ struct Balance
 }
 
 /* My first ERC20 Implementation*/
-abstract contract ERC20_1 is IERC20 {
-    string name; 
-    string symbol; 
-    uint8 decimals; 
-    uint256 totalSupply; 
-    address owner;
+contract ERC20_1 is IERC20 {
+    string public name; 
+    string public symbol; 
+    uint8 public decimals; 
+    uint256 public totalSupply; 
+    address public owner;
 
     mapping(address => Balance) balanceSheet;
 
@@ -41,7 +41,7 @@ abstract contract ERC20_1 is IERC20 {
     {
         // not sure if a check to see if the dictionary contains the value (or zero) is required here...
         // also when does it need to return false???
-        require(balanceSheet[msg.sender].totalBalance < _value, "Not enough funds...");
+        require(balanceSheet[msg.sender].totalBalance > _value, "Not enough funds...");
 
         balanceSheet[msg.sender].totalBalance -= _value;
         if(balanceSheet[msg.sender].totalBalance == 0)
