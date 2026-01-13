@@ -94,8 +94,10 @@ contract ERC20_1_Tests is Test {
         erc.addSupply(1000);
         erc.mint(address(this), 200);
 
-        //act - assert
+        //act
         bool result = erc.transfer(to, 199);
+
+        //assert
         assert(result);
 
         uint256 balance = erc.balanceOf(address(this));
@@ -122,6 +124,8 @@ contract ERC20_1_Tests is Test {
 
         //act
         bool success = erc.approve(to, 201);
+
+        //assert
         assert(!success);
         uint256 balance = erc.balanceOf(address(this));
         assert(balance == 200); 
@@ -137,6 +141,8 @@ contract ERC20_1_Tests is Test {
 
         //act
         bool success = erc.approve(to, 199);
+
+        //assert
         assert(success);
         uint256 balance = erc.balanceOf(address(this));
         assert(balance == 200); 
@@ -150,6 +156,8 @@ contract ERC20_1_Tests is Test {
 
         //act
         uint256 allowance = erc.allowance(address(this), to);
+
+        //assert
         assert(allowance == 0);
     }
 
@@ -163,6 +171,8 @@ contract ERC20_1_Tests is Test {
 
         //act
         uint256 allowance = erc.allowance(address(this), to);
+
+        //assert
         assert(allowance == 0);
     }
 
@@ -177,6 +187,8 @@ contract ERC20_1_Tests is Test {
         //act
         erc.approve(to, 201);
         uint256 allowance = erc.allowance(address(this), to);
+
+        //assert
         assert(allowance == 0);
     }
 
@@ -191,8 +203,19 @@ contract ERC20_1_Tests is Test {
         //act
         erc.approve(to, 199);
         uint256 allowance = erc.allowance(address(this), to);
+
+        //assert
         assert(allowance == 199);
     }
 
+    function test_transferFrom_shouldRevert_whenFromZeroAddress() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+
+        //act - assert
+        vm.expectRevert();
+        erc.transferFrom(address(0), address(this), 100);
+    }
 
 }
