@@ -59,9 +59,10 @@ contract ERC20_1 is IERC20 {
         return true; 
     }
 
-    // since interface definition doesn't specify any reverts, will just return false on validations
+    // since interface definition doesn't specify any reverts, will just return false on validations (except for zero address)
     function approve(address _spender, uint256 _value) public returns (bool success)
     {
+        require(_spender != address(0), "Address zero not allowed");
         if(balanceSheet[msg.sender].totalBalance < _value)
         {
             return false;

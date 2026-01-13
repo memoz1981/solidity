@@ -101,4 +101,46 @@ contract ERC20_1_Tests is Test {
         uint256 balance = erc.balanceOf(address(this));
         assert(balance == 1); 
     }
+
+    function test_approve_notAllowed_forZeroAddress() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+
+        //act - assert
+        vm.expectRevert();
+        erc.approve(address(0), 10);
+    }
+
+    function test_approve_shouldReturnFalse_whenNotEnoughBalance() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        erc.addSupply(1000);
+        erc.mint(address(this), 200);
+        address to = address(1);
+
+        //act
+        bool success = erc.approve(to, 201);
+        assert(!success);
+        uint256 balance = erc.balanceOf(address(this));
+        assert(balance == 200); 
+    }
+
+    function test_approve_happyPath() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        erc.addSupply(1000);
+        erc.mint(address(this), 200);
+        address to = address(1);
+
+        //act
+        bool success = erc.approve(to, 199);
+        assert(success);
+        uint256 balance = erc.balanceOf(address(this));
+        assert(balance == 200); 
+    }
+
+
 }
