@@ -54,6 +54,13 @@ Overflow checks are not done for shifts -> instead the result is being truncated
 **Note:** When using unary - -> i.e. -5 or -(-5) = 5 -> it's only allowed for signed integers. 
 x = type(int8).min -> unchecked {-x} -> this will cause overflow
 
+**Note:** Arithmetic operations for signed integers in two-complement system will assess overflow by carry-in and carry-out from most significant bit. 
+For example for int8s -> 11111111 (-1) + 00000001 (1) = 100000000 -> but it's not overflow as carry in bit = 1 and carry out bit = 1
+But 01111111 (127) + 00000001 (1) = 11111111 -> carry-in = 1, carry-out not there so default 0 -> overflow. 
+Note: Tricky to test checked overflow...
+
+**Note:** For unsigned integers -> overflow detected if the size is exceeded (anything carried out -> overflow)
+
 **Division** 
 - by zero -> panic error
 - rounded towards zero
@@ -62,4 +69,39 @@ b) 5/2 = 4/2 = 2
 - int.min / -1 -> checked reverted, unchecked results in incorrect result int.min
 
 **Modulo**
+- follows the same size as its left operand
+
+**Exponent**
+- type of result = type of base
+- exponent -> only unsigned integers are allowed
+- 0**0 = 1
+
+**Fixed Point Numbers**
+- Similar to float/double
+- Limited support -> can be declared but cannot be assigned to / from (how)
+- ufixedMxN (unsigned) and fixedMxN (signed)
+- M -> number of bits taken by the type, 8-256 in increments of 8
+- N -> how many decimal points are supported -> 0-80
+
+**Address**
+- Two subtypes: 'address' and 'address payable'
+- address: 20 byte value (cannot send ether)
+- address payable -> similar to address + transfer/send members (can send ether)
+- Conversion to address implicit, to address payable explicit. 
+
+**Members of Addresses**
+- balance -> address.balance
+- 3 methods to send funds: 
+a) transfer -> (address payable).transfer(0.5 ether) -> fixed to 2300 GAS -> will revert on failure. deprecated as most operations required > 2300 GAS
+b) send -> similar to above with one difference -> it doesn't revert -> but return false
+c) call -> modern method -> doesn't revert -> can optionally provide gas limit. 
+(bool success, bytes memory data) = recipient.call{value: amount}(""); 
+
+**Note:** 2300 was for re-entrancy protection
+**Note:** EIP-150 rule -> when making an external call -> can only forward 63/64 of remaining gas.  
+
+- transfer -> (address payable).transfer(0.5 ether);
+Note that if not enough balance or the address rejects -> the transaction reverts. Gas is used for reverted transactions. 
+
+
 

@@ -150,4 +150,111 @@ contract MathTests is Test {
         assert(result == b);
         assert(c == b); 
     }
+
+    function test_shift_right_without_underflow() pure public {
+        //arrange
+        int8 a = 88; // 01011000, (8 + 16 + 0 + 64) = 88 = 11 x 2e3 
+        int8 b = 11; // 00001011, 1 + 2 + 8 = 11
+        
+        //act
+        int8 result = a >> 3;
+        int8 result2 = a / 8;  
+
+        //assert
+        assert(result == b);
+        assert(result2 == b);
+    }
+
+    function test_shift_right_with_underflow() pure public {
+        //arrange
+        int8 a = 88; // 01011000, (8 + 16 + 0 + 64) = 88 = 11 x 2e3 
+        int8 b = 5; // 00000101, 1 + 4 = 5
+        
+        //act
+        int8 result = a >> 4;
+        int8 result2 = a / 16;  
+
+        //assert
+        assert(result == b);
+        assert(result2 == b);
+    }
+
+    function test_arithmetic_signed_not_overflow_when_carry_out_same_with_carry_in() pure public
+    {
+        //arrange
+        int8 a = -1; // 11111111
+        int8 b = 1; // 00000001
+        
+        //act
+        int8 result = a + b; //100000000 -> carry out 1, carry in 1 -> no overflow
+
+        //assert
+        assert(result == 0);
+    }
+
+    function test_arithmetic_unchecked_may_cause_overflow() pure public
+    {
+        //arrange
+        int8 a = 127; // 01111111
+        int8 b = 1; // 00000001
+        int8 result;
+        
+        //act
+        unchecked {result = a + b;} //10000000 -> carry out 1, carry in 1 -> no overflow
+
+        //assert
+        assert(result == -128);
+    }
+
+    function test_arithmetic_division_should_round_towards_zero() pure public
+    {
+        //arrange
+        int8 a = 5; 
+        int8 b = -5; 
+        
+        //act
+        int8 resulta = a / 2; 
+        int8 resultb = b / 2; 
+
+        //assert
+        assert(resulta == 2);
+        assert(resultb == -2);
+    }
+
+    function test_arithmetic_module_has_same_sign_as_left_operand() pure public
+    {
+        //arrange
+        int8 a = 5; 
+        int8 b = -5; 
+        
+        //act
+        int8 resulta = a % 3; 
+        int8 resultb = b % 3; 
+
+        //assert
+        assert(resulta == 2);
+        assert(resultb == -2);
+    }
+
+    function test_arithmetic_zero_exp_zero_is_one() pure public
+    {
+        //arrange
+        
+        //act
+        int8 result = 0**0; 
+
+        //assert
+        assert(result == 1);
+    }
+
+    function test_arithmetic_exp_results_in_same_type_as_base() pure public
+    {
+        //arrange
+        int8 a = 2; 
+        
+        //act
+        unchecked {
+            assert(a ** 8 == 0); // results in overflow to 100000000 -> 0 for int8
+        }
+    }
 }
