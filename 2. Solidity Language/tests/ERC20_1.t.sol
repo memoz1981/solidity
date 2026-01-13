@@ -142,5 +142,57 @@ contract ERC20_1_Tests is Test {
         assert(balance == 200); 
     }
 
+    function test_allowance_shouldReturnZero_whenOwnerHasNoFunds() public
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        address to = address(1);
+
+        //act
+        uint256 allowance = erc.allowance(address(this), to);
+        assert(allowance == 0);
+    }
+
+    function test_allowance_shouldReturnZero_whenOwnerHasntApproved() public
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        erc.addSupply(1000);
+        erc.mint(address(this), 200);
+        address to = address(1);
+
+        //act
+        uint256 allowance = erc.allowance(address(this), to);
+        assert(allowance == 0);
+    }
+
+    function test_allowance_shouldReturnZero_whenApprovalFailed() public
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        erc.addSupply(1000);
+        erc.mint(address(this), 200);
+        address to = address(1);
+
+        //act
+        erc.approve(to, 201);
+        uint256 allowance = erc.allowance(address(this), to);
+        assert(allowance == 0);
+    }
+
+    function test_allowance_happyPath() public
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        erc.addSupply(1000);
+        erc.mint(address(this), 200);
+        address to = address(1);
+
+        //act
+        erc.approve(to, 199);
+        uint256 allowance = erc.allowance(address(this), to);
+        assert(allowance == 199);
+    }
+
 
 }
