@@ -86,7 +86,7 @@ contract ERC20_1_Tests is Test {
         erc.transfer(to, 201);
     }
 
-    function test_transfer_happyPath() public 
+    function test_transfer_happyPath_when_to_not_exists() public 
     {
         //arrange
         ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
@@ -102,6 +102,31 @@ contract ERC20_1_Tests is Test {
 
         uint256 balance = erc.balanceOf(address(this));
         assert(balance == 1); 
+
+        uint256 balanceTo = erc.balanceOf(to);
+        assert(balanceTo == 199);
+    }
+
+    function test_transfer_happyPath_when_to_already_exists() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        address to = address(1);
+        erc.addSupply(1000);
+        erc.mint(address(this), 200);
+        erc.mint(to, 1);
+
+        //act
+        bool result = erc.transfer(to, 199);
+
+        //assert
+        assert(result);
+
+        uint256 balance = erc.balanceOf(address(this));
+        assert(balance == 1); 
+
+        uint256 balanceTo = erc.balanceOf(to);
+        assert(balanceTo == 200);
     }
 
     function test_approve_notAllowed_forZeroAddress() public 
@@ -214,8 +239,98 @@ contract ERC20_1_Tests is Test {
         ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
 
         //act - assert
-        vm.expectRevert();
+        vm.expectRevert("Zero from address");
         erc.transferFrom(address(0), address(this), 100);
     }
 
+    function test_transferFrom_shouldRevert_whenToZeroAddress() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+
+        //act - assert
+        vm.expectRevert("Zero to address");
+        erc.transferFrom(address(this), address(0), 100);
+    }
+
+    function test_transferFrom_shouldRevert_whenNotApproved() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        erc.addSupply(1000);
+        erc.mint(address(this), 200);
+        address to = address(1);
+
+        //act - assert
+        vm.expectRevert("Provided amount not delegated");
+        erc.transferFrom(address(this), to, 100);
+    }
+
+    function test_transferFrom_shouldRevert_whenEnoughAmountNotApproved() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        erc.addSupply(1000);
+        address from = address(1);
+        address to = address(2); 
+        erc.mint(from, 200);
+
+        vm.prank(from);
+        erc.approve(address(this), 99);
+
+        //act - assert
+        vm.expectRevert("Provided amount not delegated");
+        erc.transferFrom(from, to, 100);
+    }
+
+    function test_transferFrom_happyPath_whenToNotExists() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        erc.addSupply(1000);
+        address from = address(1);
+        address to = address(2); 
+        erc.mint(from, 200);
+
+        vm.prank(from);
+        erc.approve(address(this), 150);
+
+        //act
+        erc.transferFrom(from, to, 80);
+
+        //assert
+        assertEq(erc.totalSupply(), 1200, "total supply"); 
+        assertEq(erc.balanceOf(address(this)), 0, "this balance");
+        assertEq(erc.balanceOf(from), 120, "from balance");
+        assertEq(erc.balanceOf(to), 80, "to balance"); 
+        assertEq(erc.allowance(address(this), to), 0, "allowance this-to");
+        assertEq(erc.allowance(from, address(this)), 70, "allowance from-this");
+        assertEq(erc.allowance(from, to), 0, "allowance from-to");
+    }
+
+    function test_transferFrom_happyPath_whenToExists() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        erc.addSupply(1000);
+        address from = address(1);
+        address to = address(2); 
+        erc.mint(from, 200);
+        erc.mint(to, 1000);
+
+        vm.prank(from);
+        erc.approve(address(this), 150);
+
+        //act
+        erc.transferFrom(from, to, 80);
+
+        //assert
+        assertEq(erc.totalSupply(), 2200, "total supply"); 
+        assertEq(erc.balanceOf(address(this)), 0, "this balance");
+        assertEq(erc.balanceOf(from), 120, "from balance");
+        assertEq(erc.balanceOf(to), 1080, "to balance"); 
+        assertEq(erc.allowance(address(this), to), 0, "allowance this-to");
+        assertEq(erc.allowance(from, address(this)), 70, "allowance from-this");
+        assertEq(erc.allowance(from, to), 0, "allowance from-to");
+    }
 }

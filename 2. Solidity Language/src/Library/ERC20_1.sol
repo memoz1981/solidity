@@ -82,7 +82,9 @@ contract ERC20_1 is IERC20 {
     // to approve transfer from functionality
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success)
     {
-        require(balanceSheet[_from].approvals[msg.sender] >= _value);
+        require(_from != address(0), "Zero from address");
+        require(_to != address(0), "Zero to address");
+        require(balanceSheet[_from].approvals[msg.sender] >= _value, "Provided amount not delegated");
         
         // again having an ambiguity on if the total balance should be deducted on approvals, or still to use total balance
         // also not sure if to revert on below or return false. 
@@ -98,6 +100,10 @@ contract ERC20_1 is IERC20 {
         {
             delete balanceSheet[_from].approvals[msg.sender];
         }
+
+        Balance storage to = balanceSheet[_to];
+        to.exists = true;
+        to.totalBalance += _value; 
 
         emit Transfer(_from, _to, _value);
     }
