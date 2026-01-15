@@ -11,7 +11,6 @@ struct Balance
 {
     uint256 totalBalance;
     mapping(address => uint256) approvals; 
-    bool exists;
 }
 
 /* My first ERC20 Implementation*/
@@ -43,7 +42,7 @@ contract ERC20_1 is IERC20 {
         
         // not sure if a check to see if the dictionary contains the value (or zero) is required here...
         // also when does it need to return false???
-        require(balanceSheet[msg.sender].totalBalance > _value, "Not enough funds...");
+        require(balanceSheet[msg.sender].totalBalance >= _value, "Not enough funds...");
 
         balanceSheet[msg.sender].totalBalance -= _value;
         if(balanceSheet[msg.sender].totalBalance == 0)
@@ -52,7 +51,6 @@ contract ERC20_1 is IERC20 {
         }
 
         Balance storage to = balanceSheet[_to];
-        to.exists = true;
         to.totalBalance += _value; 
 
         emit Transfer(msg.sender, _to, _value);
@@ -63,10 +61,6 @@ contract ERC20_1 is IERC20 {
     function approve(address _spender, uint256 _value) public returns (bool success)
     {
         require(_spender != address(0), "Address zero not allowed");
-        if(balanceSheet[msg.sender].totalBalance < _value)
-        {
-            return false;
-        }
 
         balanceSheet[msg.sender].approvals[_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
@@ -84,7 +78,7 @@ contract ERC20_1 is IERC20 {
     {
         require(_from != address(0), "Zero from address");
         require(_to != address(0), "Zero to address");
-        require(balanceSheet[_from].approvals[msg.sender] >= _value, "Provided amount not delegated");
+        require(this.allowance(_from, msg.sender) >= _value, "Provided amount not delegated");
         
         // again having an ambiguity on if the total balance should be deducted on approvals, or still to use total balance
         // also not sure if to revert on below or return false. 
@@ -102,10 +96,10 @@ contract ERC20_1 is IERC20 {
         }
 
         Balance storage to = balanceSheet[_to];
-        to.exists = true;
         to.totalBalance += _value; 
 
         emit Transfer(_from, _to, _value);
+        return true;
     }
 
     /* FUNCTIONS TO BE ABLE TO TEST THE CONTRACT */
@@ -123,7 +117,6 @@ contract ERC20_1 is IERC20 {
     function mint(address to, uint256 amount) public ownerOnly {
         require(to != address(0));
         Balance storage b = balanceSheet[to];
-        b.exists = true; 
         b.totalBalance += amount;
 
         totalSupply += amount;

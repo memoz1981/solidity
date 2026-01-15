@@ -107,6 +107,28 @@ contract ERC20_1_Tests is Test {
         assert(balanceTo == 199);
     }
 
+    function test_transfer_happyPath_whenFullHoldings() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        address to = address(1);
+        erc.addSupply(1000);
+        erc.mint(address(this), 200);
+
+        //act
+        bool result = erc.transfer(to, 200);
+
+        //assert
+        assert(result);
+
+        uint256 balance = erc.balanceOf(address(this));
+        assert(balance == 0); 
+
+        uint256 balanceTo = erc.balanceOf(to);
+        assert(balanceTo == 200);
+    }
+
+
     function test_transfer_happyPath_when_to_already_exists() public 
     {
         //arrange
@@ -139,7 +161,7 @@ contract ERC20_1_Tests is Test {
         erc.approve(address(0), 10);
     }
 
-    function test_approve_shouldReturnFalse_whenNotEnoughBalance() public 
+    function test_approve_shouldBeAbleToApproveMoreThanHoldings() public 
     {
         //arrange
         ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
@@ -148,10 +170,10 @@ contract ERC20_1_Tests is Test {
         address to = address(1);
 
         //act
-        bool success = erc.approve(to, 201);
+        bool success = erc.approve(to, 300);
 
         //assert
-        assert(!success);
+        assert(success);
         uint256 balance = erc.balanceOf(address(this));
         assert(balance == 200); 
     }
@@ -195,22 +217,6 @@ contract ERC20_1_Tests is Test {
         address to = address(1);
 
         //act
-        uint256 allowance = erc.allowance(address(this), to);
-
-        //assert
-        assert(allowance == 0);
-    }
-
-    function test_allowance_shouldReturnZero_whenApprovalFailed() public
-    {
-        //arrange
-        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
-        erc.addSupply(1000);
-        erc.mint(address(this), 200);
-        address to = address(1);
-
-        //act
-        erc.approve(to, 201);
         uint256 allowance = erc.allowance(address(this), to);
 
         //assert
@@ -283,6 +289,32 @@ contract ERC20_1_Tests is Test {
         erc.transferFrom(from, to, 100);
     }
 
+    function test_transferFrom_shouldReturnFalseWhenEnoughBalanceNotExists() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        erc.addSupply(1000);
+        address from = address(1);
+        address to = address(2); 
+        erc.mint(from, 200);
+
+        vm.prank(from);
+        erc.approve(address(this), 300);
+
+        //act
+        bool result = erc.transferFrom(from, to, 250);
+
+        //assert
+        assertEq(result, false, "returned true");
+        assertEq(erc.totalSupply(), 1200, "total supply"); 
+        assertEq(erc.balanceOf(address(this)), 0, "this balance");
+        assertEq(erc.balanceOf(from), 200, "from balance");
+        assertEq(erc.balanceOf(to), 0, "to balance"); 
+        assertEq(erc.allowance(address(this), to), 0, "allowance this-to");
+        assertEq(erc.allowance(from, address(this)), 300, "allowance from-this");
+        assertEq(erc.allowance(from, to), 0, "allowance from-to");
+    }
+
     function test_transferFrom_happyPath_whenToNotExists() public 
     {
         //arrange
@@ -296,9 +328,10 @@ contract ERC20_1_Tests is Test {
         erc.approve(address(this), 150);
 
         //act
-        erc.transferFrom(from, to, 80);
+        bool result = erc.transferFrom(from, to, 80);
 
         //assert
+        assertEq(result, true, "returned false");
         assertEq(erc.totalSupply(), 1200, "total supply"); 
         assertEq(erc.balanceOf(address(this)), 0, "this balance");
         assertEq(erc.balanceOf(from), 120, "from balance");
@@ -322,15 +355,97 @@ contract ERC20_1_Tests is Test {
         erc.approve(address(this), 150);
 
         //act
-        erc.transferFrom(from, to, 80);
+        bool result = erc.transferFrom(from, to, 80);
 
         //assert
+        assertEq(result, true, "returned false");
         assertEq(erc.totalSupply(), 2200, "total supply"); 
         assertEq(erc.balanceOf(address(this)), 0, "this balance");
         assertEq(erc.balanceOf(from), 120, "from balance");
         assertEq(erc.balanceOf(to), 1080, "to balance"); 
         assertEq(erc.allowance(address(this), to), 0, "allowance this-to");
         assertEq(erc.allowance(from, address(this)), 70, "allowance from-this");
+        assertEq(erc.allowance(from, to), 0, "allowance from-to");
+    }
+
+    function test_transferFrom_happyPath_whenAmountSameAsApprovedAmount() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        erc.addSupply(1000);
+        address from = address(1);
+        address to = address(2); 
+        erc.mint(from, 200);
+        erc.mint(to, 1000);
+
+        vm.prank(from);
+        erc.approve(address(this), 150);
+
+        //act
+        bool result = erc.transferFrom(from, to, 150);
+
+        //assert
+        assertEq(result, true, "returned false");
+        assertEq(erc.totalSupply(), 2200, "total supply"); 
+        assertEq(erc.balanceOf(address(this)), 0, "this balance");
+        assertEq(erc.balanceOf(from), 50, "from balance");
+        assertEq(erc.balanceOf(to), 1150, "to balance"); 
+        assertEq(erc.allowance(address(this), to), 0, "allowance this-to");
+        assertEq(erc.allowance(from, address(this)), 0, "allowance from-this");
+        assertEq(erc.allowance(from, to), 0, "allowance from-to");
+    }
+
+    function test_transferFrom_happyPath_whenAmountSameAsHoldingsAmount() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        erc.addSupply(1000);
+        address from = address(1);
+        address to = address(2); 
+        erc.mint(from, 200);
+        erc.mint(to, 1000);
+
+        vm.prank(from);
+        erc.approve(address(this), 300);
+
+        //act
+        bool result = erc.transferFrom(from, to, 200);
+
+        //assert
+        assertEq(result, true, "returned false");
+        assertEq(erc.totalSupply(), 2200, "total supply"); 
+        assertEq(erc.balanceOf(address(this)), 0, "this balance");
+        assertEq(erc.balanceOf(from), 0, "from balance");
+        assertEq(erc.balanceOf(to), 1200, "to balance"); 
+        assertEq(erc.allowance(address(this), to), 0, "allowance this-to");
+        assertEq(erc.allowance(from, address(this)), 100, "allowance from-this");
+        assertEq(erc.allowance(from, to), 0, "allowance from-to");
+    }
+
+    function test_transferFrom_happyPath_whenAmountSameAsHoldingsAndApprovedAmount() public 
+    {
+        //arrange
+        ERC20_1 erc = new ERC20_1("My Token", "TKN", 18);
+        erc.addSupply(1000);
+        address from = address(1);
+        address to = address(2); 
+        erc.mint(from, 200);
+        erc.mint(to, 1000);
+
+        vm.prank(from);
+        erc.approve(address(this), 200);
+
+        //act
+        bool result = erc.transferFrom(from, to, 200);
+
+        //assert
+        assertEq(result, true, "returned false");
+        assertEq(erc.totalSupply(), 2200, "total supply"); 
+        assertEq(erc.balanceOf(address(this)), 0, "this balance");
+        assertEq(erc.balanceOf(from), 0, "from balance");
+        assertEq(erc.balanceOf(to), 1200, "to balance"); 
+        assertEq(erc.allowance(address(this), to), 0, "allowance this-to");
+        assertEq(erc.allowance(from, address(this)), 0, "allowance from-this");
         assertEq(erc.allowance(from, to), 0, "allowance from-to");
     }
 }
